@@ -18,8 +18,8 @@ function BackendPayments()
             }  
             dborun("update accountsdogm set balance=0 where coinid=0"); 
 	} elseif ($coin->symbol === 'DOGE') {  
-            // For DOGE coins, process accountsdogm table  
-            $list = getdbolist('db_coins', "enable and id in (select distinct coinid from accountsdogm)");  
+            // For DOGE coins, process accountsdoge table  
+            $list = getdbolist('db_coins', "enable and id in (select distinct coinid from accountsdoge)");  
             foreach ($list as $dogeCoin) {  
                 BackendCoinPayments($dogeCoin);  
             }  
