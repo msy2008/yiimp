@@ -1,6 +1,6 @@
 <?php
 
-class db_accountsdogm extends CActiveRecord
+class db_accountsdoge extends CActiveRecord
 {
 	public static function model($className=__CLASS__)
 	{
