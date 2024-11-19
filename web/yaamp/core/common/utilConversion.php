@@ -99,21 +99,7 @@ function GetMonthString($n)
 
 function bitcoinvaluetoa($v)
 {
-    if (is_int($v) || floor($v) == $v) {
-        return (string)$v;
-    } else {
-        $vStr = (string)$v;
-        $decimalPos = strpos($vStr, '.');
-        if ($decimalPos === false) {
-            return $vStr;
-        }
-        $decimalLength = strlen($vStr) - $decimalPos - 1;
-        if ($decimalLength > 8) {
-            return sprintf('%.8f', $v);
-        } else {
-            return $vStr;
-        }
-    }
+	return sprintf('%.8f', round($v, 8, PHP_ROUND_HALF_DOWN));
 }
 
 function mbitcoinvaluetoa($v)
