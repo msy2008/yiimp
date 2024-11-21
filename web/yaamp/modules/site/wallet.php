@@ -77,19 +77,6 @@ if($user) echo <<<END
 END;
 
 if($user) echo <<<END
-<div class="main-left-box">
-<div class="main-left-title">Last 24 Hours Balance: $user->username</div>
-<div class="main-left-inner"><br>
-<div id='graph_earnings_results' style='height: 240px;'></div>
-<div style='float: right;'>
-<span style='font-size: .8em; color: #4bb2c5;'>Balance</span>
-<span style='font-size: .8em; color: #eaa228;'>Pending</span>
-</div>
-<br>
-</div></div><br>
-END;
-
-if($user) echo <<<END
 <div id='main_graphs_results'>
 <br><br><br><br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br><br><br><br>
@@ -317,13 +304,13 @@ function graph_init_hashrate(data, algo)
 		title: '<b>'+algo+' Hashrate (Mh/s)</b>',
 		axes: {
 			xaxis: {
-				tickInterval: 7200,
+				tickInterval: 3600,
 				renderer: $.jqplot.DateAxisRenderer,
 				tickOptions: {formatString: '<font size=1>%#Hh</font>'}
 			},
 			yaxis: {
 				min: 0,
-				tickOptions: {formatString: '<font size=1>%#.3f &nbsp;</font>'}
+				tickOptions: {formatString: '<font size=1>%d</font>'}
 			}
 		},
 
