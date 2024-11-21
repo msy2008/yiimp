@@ -216,6 +216,48 @@ function datetoa2($d)
 	return "<span title='$f'>$res</span>";
 }
 
+function datetoa3($d)
+{
+    if (strpos($d, ':') !== false) {
+        $d = strtotime($d);
+    }
+ 
+    if (empty($d)) {
+        return '';
+    }
+ 
+    $table = array(
+        array('y', 60*60*24*365, 60*60*24*365), 
+        array('mo', 60*60*24*30, 60*60*24*30),  
+        array('w', 60*60*24*7, 60*60*24*7),  
+        array('d', 60*60*24, 60*60*24),     
+        array('h', 60*60, 60*60),            
+        array('m', 60, 60),                   
+        array('s', 1, 1),                    
+    );
+ 
+    $e = time() - $d;
+    $res = '';
+ 
+    foreach ($table as $r) {
+        if ($e >= $r[1]) {
+            if ($r[0] === 's') {
+                $res = '<span style="font-size: 1.2em; font-weight: bold; color: #00FF00;">' . floor($e / $r[2]) . $r[0] . '</span>';
+            } else {
+                $res = floor($e / $r[2]) . $r[0];
+            }
+            break;
+        }
+    }
+ 
+    if (empty($res)) {
+        $res = 'now';
+    }
+ 
+    $f = date('Y-m-d H:i:s', $d);
+    return "<span title='$f'>$res</span>";
+}
+
 function sectoa($i)
 {
 //	if($i < (60*60))
