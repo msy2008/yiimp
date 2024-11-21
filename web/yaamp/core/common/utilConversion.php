@@ -121,6 +121,33 @@ function dogecoinvaluetoa($v)
     }
 }
 
+function getBlockHeightColor($height)
+{
+    $colors = array(
+        '#FFFFFF', 
+        '#E0E0E0', 
+        '#CCCCCC', 
+        '#888888', 
+        '#00FFFF', 
+        '#00BFFF', 
+        '#1E90FF', 
+        '#4682B4', 
+        '#FFD700', 
+        '#FFA500', 
+        '#FF4500', 
+        '#8A2BE2', 
+        '#008000',  
+        '#32CD32', 
+        '#FF00FF', 
+    );
+ 
+    $colorCount = count($colors);
+ 
+    $index = $height % $colorCount;
+ 
+    return $colors[$index];
+}
+
 function mbitcoinvaluetoa($v)
 {
 	return sprintf('%.5f', round($v, 5, PHP_ROUND_HALF_DOWN));
