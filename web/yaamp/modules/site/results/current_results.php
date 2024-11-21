@@ -18,16 +18,13 @@ echo <<<END
 <thead>
 <tr>
 <th>Algo</th>
+<th data-sorter="numeric" align="right">Type</th>
 <th data-sorter="numeric" align="right">Port</th>
 <th data-sorter="numeric" align="right">Coins</th>
 <th data-sorter="numeric" align="right">Miners</th>
 <th data-sorter="numeric" align="right">Hashrate</th>
 <th data-sorter="numeric" align="right">Network</th>	
-<th data-sorter="currency" align="right">Fees**</th>
-<th data-sorter="currency" class="estimate" align="right">Current<br>Estimate</th>
-<!--<th data-sorter="currency" >Norm</th>-->
-<th data-sorter="currency" class="estimate" align="right">24 Hours<br>Estimated</th>
-<th data-sorter="currency"align="right">24 Hours<br>Actual***</th>
+<th data-sorter="numeric" align="right">Fees*</th>
 </tr>
 </thead>
 END;
@@ -44,23 +41,9 @@ foreach(yaamp_get_algos() as $algo)
 		"select price from hashrate where algo=:algo order by time desc limit 1", array(':algo'=>$algo));
 
 	$norm = $price*$algo_norm;
-	$norm = take_yaamp_fee($norm, $algo);
 
 	$algos[] = array($norm, $algo);
-
-	if($norm > $best_norm)
-	{
-		$best_norm = $norm;
-		$best_algo = $algo;
-	}
 }
-
-function cmp($a, $b)
-{
-	return $a[0] < $b[0];
-}
-
-usort($algos, 'cmp');
 
 $total_coins = 0;
 $total_miners = 0;
@@ -76,7 +59,6 @@ foreach($algos as $item)
 	$coinsym = '';
 	$coins = getdbocount('db_coins', "enable and visible and auto_ready and algo=:algo", array(':algo'=>$algo));
 	if ($coins == 1) {
-		// If we only mine one coin, show it...
 		$coin = getdbosql('db_coins', "enable and visible and auto_ready and algo=:algo", array(':algo'=>$algo));
 		$coinsym = empty($coin->symbol2) ? $coin->symbol : $coin->symbol2;
 		$coinsym = '<span title="'.$coin->name.'">'.$coinsym.'</a>';
@@ -110,9 +92,6 @@ foreach($algos as $item)
 	$hashrate1 = controller()->memcache->get_database_scalar("current_hashrate1-$algo",
 		"select avg(hashrate) from hashrate where time>$t and algo=:algo", array(':algo'=>$algo));
 
-	$algo_unit_factor = yaamp_algo_mBTC_factor($algo);
-	$btcmhday1 = $hashrate1 != 0? mbitcoinvaluetoa($total1 / $hashrate1 * 1000000 * 1000 * $algo_unit_factor): '';
-
 	$fees = yaamp_fee($algo);
 	$port = getAlgoPort($algo);
 
@@ -128,27 +107,12 @@ foreach($algos as $item)
         echo "<td align=center style='font-size: .8em; background-color: #41464b;'></td>";
         echo "<td align=center style='font-size: .8em; background-color: #41464b;'></td>";
         echo "<td align=center style='font-size: .8em; background-color: #41464b;'></td>";
-
-	if($algo == $best_algo)
-		echo '<td class="estimate" align="right" style="font-size: .8em;" title="normalized '.$norm.'"><b>'.$price.'*</b></td>';
-	else if($norm>0)
-		echo '<td class="estimate" align="right" style="font-size: .8em;" title="normalized '.$norm.'">'.$price.'</td>';
-
-	else
-		echo '<td class="estimate" align="right" style="font-size: .8em;">'.$price.'</td>';
-
-
-	echo '<td class="estimate" align="right" style="font-size: .8em;">'.$avgprice.'</td>';
-
-	if($algo == $best_algo)
-		echo '<td align="right" style="font-size: .8em;" data="'.$btcmhday1.'"><b>'.$btcmhday1.'*</b></td>';
-	else
-		echo '<td align="right" style="font-size: .8em;" data="'.$btcmhday1.'">'.$btcmhday1.'</td>';
-
+        echo "<td align=center style='font-size: .8em; background-color: #41464b;'></td>";
 	echo "</tr>";
 
         if ($coins > 0){
-        $list = getdbolist('db_coins', "enable and visible and auto_ready and algo=:algo order by index_avg desc", array(':algo'=>$algo));
+        $list = getdbolist('db_coins', "enable and visible and auto_ready and algo=:algo order by id", array(':algo'=>$algo));
+   
         foreach($list as $coin){
         $name = substr($coin->name, 0, 12);
         $symbol = $coin->getOfficialSymbol();
@@ -157,12 +121,17 @@ foreach($algos as $item)
         $port_count = getdbocount('db_stratums', "algo=:algo and symbol=:symbol", array(':algo'=>$algo,':symbol'=>$symbol));
         $port_db = getdbosql('db_stratums', "algo=:algo and symbol=:symbol", array(':algo'=>$algo,':symbol'=>$symbol));
 
+        if($coin->auxpow && $coin->auto_ready)
+            echo "<td align='right' style='font-size: .8em;'>AUXPOW</td>";
+        else
+            echo "<td align='right' style='font-size: .8em;'>POW</td>";
+
         if($port_count == 1)
             echo "<td align='right' style='font-size: .8em;'>.$port_db->port.</td>";
         else
             echo "<td align='right' style='font-size: .8em;'>$port</td>";
 
-            echo "<td align='right' style='font-size: .8em;'>$symbol</td>";
+        echo "<td align='right' style='font-size: .8em;'>$symbol</td>";
 
         if($port_count == 1)
             echo "<td align='right' style='font-size: .8em;'>.$port_db->workers.</td>";
@@ -209,9 +178,6 @@ foreach($algos as $item)
             $network_hash = $network_hash ? Itoa2($network_hash) . 'h/s' : '';
             echo "<td align='right' style='font-size: .8em;' data='$pool_hash'>$network_hash</td>";	
             echo "<td align='right' style='font-size: .8em;'>{$fees}%</td>";
-        $btcmhd = yaamp_profitability($coin);
-        $btcmhd = mbitcoinvaluetoa($btcmhd);
-        echo "<td align='right' style='font-size: .8em;'>$btcmhd</td>";
         echo "</tr>";
     }
 } 
@@ -222,33 +188,23 @@ foreach($algos as $item)
 
 echo "</tbody>";
 
-if($defaultalgo == 'all')
-	echo "<tr style='cursor: pointer; background-color: #e0d3e8;' onclick='javascript:select_algo(\"all\")'>";
-else
-	echo "<tr style='cursor: pointer' class='ssrow' onclick='javascript:select_algo(\"all\")'>";
-
-echo "<td><b>all</b></td>";
+echo "<td style='color: gray; pointer-events: none;'><b>all</b></td>"; 
+echo "<td align=right style='font-size: .8em;'>Merged Mining</td>";
 echo "<td></td>";
 echo "<td align=right style='font-size: .8em;'>$total_coins</td>";
 echo "<td align=right style='font-size: .8em;'>$total_miners</td>";
 echo "<td></td>";
-echo "<td></td>";
-echo '<td class="estimate"></td>';
-echo '<td class="estimate"></td>';
-echo "<td></td>";
 echo "</tr>";
 
 echo "</table>";
-
-echo '<p style="font-size: .8em;">&nbsp;* values in mBTC/MH/day, per GH for sha & blake algos</p>';
-
+echo '<p style="font-size: .8em;">&nbsp;* Are the fees real ? Do not believe,verify it ! Use Earnings verify it !</p>';
 echo "</div></div><br>";
 ?>
 
-<?php if (!$showestimates): ?>
 
+<?php if (!$showestimates): ?>
 <style type="text/css">
-#maintable1 .estimate { display: none; }
+
 </style>
 
 <?php endif; ?>
