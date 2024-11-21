@@ -148,6 +148,20 @@ function getBlockHeightColor($height)
     return $colors[$index];
 }
 
+function getColorCode($code) {
+    $code = strtoupper($code);
+ 
+    if ($code === 'IFC') {
+        return '#FFFF00'; 
+    } elseif ($code === 'DOGM') {
+        return '#FFA500'; 
+    } elseif ($code === 'DOGE') {
+        return '#FF00FF';
+    } else {
+        return '#FFFFFF'; 
+    }
+}
+
 function mbitcoinvaluetoa($v)
 {
 	return sprintf('%.5f', round($v, 5, PHP_ROUND_HALF_DOWN));
