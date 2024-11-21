@@ -15,10 +15,9 @@ $total_rate = yaamp_pool_rate();
 $total_rate_d = $total_rate? 'at '.Itoa2($total_rate).'h/s': '';
 
 if($algo == 'all')
-	$list = getdbolist('db_coins', "enable and visible order by index_avg desc");
+        $list = getdbolist('db_coins', "enable and visible order by id");
 else
-	$list = getdbolist('db_coins', "enable and visible and algo=:algo order by index_avg desc", array(':algo'=>$algo));
-
+	$list = getdbolist('db_coins', "enable and visible and algo=:algo order by id", array(':algo'=>$algo));
 $count = count($list);
 
 if($algo == 'all')
@@ -35,7 +34,7 @@ else
 
 $coin_count = $count > 1 ? "on $count wallets" : 'on a single wallet';
 $miner_count = $worker > 1 ? "$worker miners" : "$worker miner";
-WriteBoxHeader("Mining $coin_count $total_rate_d, $miner_count");
+WriteBoxHeader("Merged Mining $coin_count $total_rate_d, $miner_count");
 
 showTableSorter('maintable3', "{
 	tableClass: 'dataGrid2',
@@ -51,12 +50,13 @@ echo <<<END
 <tr>
 <th data-sorter=""></th>
 <th data-sorter="text">Name</th>
-<th align="right">Amount</th>
+<th align="right">Block Reward</th>
+<th align="right">Coins</th>
 <th data-sorter="numeric" align="right">Diff</th>
-<th align="right">Block</th>
-<th align="right">TTF***</th>
+<th align="right">Blocks</th>
+<th align="right">TTF*</th>
 <th data-sorter="numeric" align="right">Hash**</th>
-<th data-sorter="currency" align="right">Profit*</th>
+<th align="right">Countdown***</th>
 </tr>
 </thead>
 END;
@@ -150,12 +150,12 @@ foreach($list as $coin)
 		$owed2 = bitcoinvaluetoa($owed - $coin->balance);
 		$symbol = $coin->getOfficialSymbol();
 		$title = "We are short of this currency ($owed2 $symbol). Please switch to another currency until we find more $symbol blocks.";
-		echo "<td><b><a href=\"/site/block?id={$coin->id}\" title=\"$title\" style=\"color: #c55;\">$name</a></b><span style=\"font-size: .8em;\"> ({$coin->algo})</span></td>";
+           echo "<td><b><a href=\"/site/block?id={$coin->id}\" title=\"$title\" style=\"color: #c55;\">$name</a></b></td>";
 	} else {
-		echo "<td><b><a href='/site/block?id=$coin->id'>$name</a></b><span style='font-size: .8em'> ($coin->algo)</span></td>";
+           echo "<td><b><a href='/site/block?id=$coin->id'>$name</a></b></td>";;
 	}
-	echo "<td align=right style='font-size: .8em;'><b>$reward $coin->symbol_show</b></td>";
-
+	echo "<td align=right style='font-size: .8em;'><b>$reward</b></td>";
+        echo "<td align=right style='font-size: .8em;'><b>$coin->symbol_show</b></td>";
 	$title = "POW $coin->difficulty";
 	if($coin->rpcencoding == 'POS')
 		$title .= "\nPOS $coin->difficulty_pos";
@@ -178,9 +178,26 @@ foreach($list as $coin)
 		echo "<td align=right style='font-size: .8em; opacity: 0.6;' title='merge mined\n$network_hash' data='$pool_hash_pow'>$pool_hash_pow_sfx</td>";
 	else
 		echo "<td align=right style='font-size: .8em;' title='$network_hash' data='$pool_hash'>$pool_hash_sfx</td>";
-
 	$btcmhd = mbitcoinvaluetoa($btcmhd);
-	echo "<td align=right style='font-size: .8em;' data='$btcmhd'><b>$btcmhd</b></td>";
+
+        if ($coin->symbol === 'IFC') {
+            $blocksremaining = 11923200 - $height;
+            $totalDaysRemaining = $blocksremaining / 2550; 
+            $fullDaysRemaining = floor($totalDaysRemaining); 
+            $hoursRemaining = ($totalDaysRemaining - $fullDaysRemaining) * 24; 
+            $hoursRemaining = round($hoursRemaining); 
+            echo "<td align=right style='font-size: .8em;' title='IFC will be halving at block height 11923200'>{$fullDaysRemaining} days {$hoursRemaining} hours</td>";
+        } elseif ($coin->symbol === 'DOGM') {
+            $blocksremaining = 5622400 - $height;
+            $totalDaysRemaining = $blocksremaining / 1350; 
+            $fullDaysRemaining = floor($totalDaysRemaining); 
+            $hoursRemaining = ($totalDaysRemaining - $fullDaysRemaining) * 24; 
+            $hoursRemaining = round($hoursRemaining); 
+            echo "<td align=right style='font-size: .8em;' title='DOGM will activate dynamic auxpow chain ID consensus at block height 5622400'>{$fullDaysRemaining} days {$hoursRemaining} hours</td>";
+        } else {
+            echo "<td align=right style='font-size: .8em;'> </td>";
+        }
+
 	echo "</tr>";
 }
 
@@ -223,9 +240,9 @@ if(isset($price_rent) && $showrental)
 echo "</table>";
 
 echo '<p style="font-size: .8em;">
-	&nbsp;*** estimated average time to find a block at full pool speed<br/>
+	&nbsp;* estimated average time to find a block at full pool speed<br/>
 	&nbsp;** approximate from the last 5 minutes submitted shares<br/>
-	&nbsp;* 24h estimation from net difficulty in mBTC/MH/day (GH/day for sha & blake algos)<br>
+        &nbsp;*** halving or other major changes reminder<br/>
 </p>';
 
 echo "</div></div><br>";
