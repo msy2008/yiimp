@@ -35,9 +35,6 @@ span.block.new       { color: white; background-color: #ad4ef0; }
 span.block.orphan    { color: white; background-color: #d9534f; }
 span.block.immature  { color: white; background-color: #f0ad4e; }
 span.block.confirmed { color: white; background-color: #5cb85c; }
-span.auxpow	     { padding: 2px; display: inline-block; text-align: center; min-width: 15px; border-radius: 3px; color: white; background-color: #ff3366; }
-span.pow	     { padding: 2px; display: inline-block; text-align: center; min-width: 15px; border-radius: 3px; color: white; background-color: #0066cc; }
-	
 b.row a { font-size: 10pt; }
 .ssrow td.row { font-size: .8em; }
 td.right { text-align: right; }
@@ -48,11 +45,12 @@ td.right { text-align: right; }
 <tr>
 <td></td>
 <th>Name</th>
-<th align="right">Amount</th>
-<th align="right">Merged</th>	
+<th align="right">Type</th>
+<th align="right">Block Reward</th>
+<th align="right">Coins</th>
 <th align="right">Difficulty</th>
-<th align="right">Block</th>
-<th align="right">Time</th>	
+<th align="right">Blocks</th>
+<th align="right">Time</th>
 <th align="right">Status</th>
 </tr>
 </thead>
@@ -60,7 +58,7 @@ EOT;
 
 foreach($db_blocks as $db_block)
 {
-	$d = datetoa2($db_block->time);
+	$d = datetoa3($db_block->time);
 	if(!$db_block->coin_id)
 	{
 		if (!$showrental)
@@ -94,19 +92,20 @@ foreach($db_blocks as $db_block)
 
 	echo '<tr class="ssrow">';
 	echo '<td width="18px"><img width="16px" src="'.$coin->image.'"></td>';
-	echo '<td class="row"><b class="row">'.$link.'</b> ('.$db_block->algo.')'.$flags.'</td>';
-	echo '<td class="row right"><b>'.$reward.' '.$coin->symbol_show.'</b></td>';
+        echo '<td class="row"><b class="row">'.$link.'</b>'.$flags.'</td>';
 
-	echo '<td class="row right">';
+        echo '<td class="row right">';
         if($coin->auxpow && $coin->auto_ready) 
 	    echo '<span class="auxpow" title="Block was found by auxpow">AUXPOW</span>';
         else
             echo '<span class="pow" title="Block was found by pow">POW</span>';
         echo "</td>";
-	
+        
+        echo '<td class="row right"><b>'.$reward.'</b></td>';
+        echo '<td class="row right"><b style="font-size: 1em; color: ' . getColorCode($coin->symbol_show) . ';">' . $coin->symbol_show . '</b></td>';
 	echo '<td class="row right" title="found '.$db_block->difficulty_user.'">'.$difficulty.'</td>';
 	echo '<td class="row right">'.$height.'</td>';
-	echo '<td class="row right">'.$d.' ago</td>';
+	echo '<td class="row right">'.$d.'&nbsp;ago</td>';
 	echo '<td class="row right">';
 
 	if($db_block->category == 'orphan')
