@@ -42,7 +42,7 @@ echo <<<end
 <th data-sorter="text">Coin</th>
 <th data-sorter="text">Address</th>
 <th data-sorter="currency">Amount</th>
-<th data-sorter="numeric">Block</th>
+<th data-sorter="numeric">Blocks</th>
 <th data-sorter="">Status</th>
 <th data-sorter="numeric">Time</th>
 </tr>
@@ -74,12 +74,13 @@ foreach($earnings as $earning)
 	$block = getdbo('db_blocks', $earning->blockid);
 	if(!$block) continue;
 
-	$t1 = datetoa2($earning->create_time). ' ago';
-	$t2 = datetoa2($earning->mature_time);
-	if ($t2) $t2 = '+'.$t2;
-
+        $d = datetoa3($earning->create_time);
+	
 	$coinimg = CHtml::image($coin->image, $coin->symbol, array('width'=>'16'));
         $coinlink = $coin->name;
+
+        $blockHeight = $block->height;
+        $color = getBlockHeightColor($blockHeight);
 
 	echo '<tr class="ssrow">';
         echo '<td width="24">'.$user->id.'</td>';
@@ -91,9 +92,9 @@ foreach($earnings as $earning)
 	echo '<td><b><a href="/?address='.$user->username.'">'.$user->username.'</a></b></td>';
         }
 	echo '<td>'.$earning->amount.'</td>';
-	echo '<td>'.$block->height.'</td>';
+        echo '<td style="color: ' . $color . ';">' . $block->height . '</td>';
 	echo '<td data="'.$block->height.'">'."$block->category ($block->confirmations)</td>";
-	echo '<td data="'.$earning->create_time.'">'."$t1 $t2</td>";
+        echo '<td data="'.$earning->create_time.'">'.$d.'&nbsp;ago</td>';
 	echo '</td>';
 	echo "</tr>";
 
