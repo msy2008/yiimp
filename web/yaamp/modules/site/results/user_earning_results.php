@@ -33,10 +33,10 @@ span.block.cleared  { color: white; background-color: gray; }
 <tr>
 <td></td>
 <th>Name</th>
-<th>Block</th>
+<th>Blocks</th>
 <th align=right>Amount</th>
+<th align=right>Coins</th>
 <th align=right>Percent</th>
-<th align=right>mBTC</th>
 <th align=right>Time</th>
 <th align=right>Status</th>
 </tr>
@@ -55,7 +55,7 @@ foreach($earnings as $earning)
 		continue;
 	}
 
-	$d = datetoa2($earning->create_time);
+	$d = datetoa3($earning->create_time);
 	if(!$coin)
 	{
 		if (!$showrental)
@@ -69,8 +69,8 @@ foreach($earnings as $earning)
 		echo '<td width="18"><img width="16" src="/images/btc.png"></td>';
 		echo '<td><b>Rental</b><span style="font-size: .8em;"> ('.$block->algo.')</span></td>';
 		echo '<td align="right" style="font-size: .8em;"><b>'.$reward.' BTC</b></td>';
-		echo '<td align="right" style="font-size: .8em;">'.$percent.'%</td>';
-		echo '<td align="right" style="font-size: .8em;">'.$value.'</td>';
+                echo '<td align="right" style="font-size: .8em;">'.$coin->symbol_show.'</td>';
+		echo '<td align="right" style="font-size: .8em;">'.$percent.'%</td>';	
 		echo '<td align="right" style="font-size: .8em;">'.$d.'&nbsp;ago</td>';
 		echo '<td align="right" style="font-size: .8em;"><span class="block cleared">Cleared</span></td>';
 		echo '</tr>';
@@ -78,18 +78,18 @@ foreach($earnings as $earning)
 		continue;
 	}
 
-	$reward = altcoinvaluetoa($earning->amount);
+	$reward = $earning->amount;
 	$percent = $block->amount ? percentvaluetoa($earning->amount * 100/$block->amount) : 0;
 	$value = mbitcoinvaluetoa($earning->amount*$earning->price*1000);
         $height = number_format($block->height, 0, '', '');
 	$blockUrl = $coin->createExplorerLink($coin->name, array('height'=>$block->height));
 	echo '<tr class="ssrow">';
 	echo '<td width="18"><img width="16" src="'.$coin->image.'"></td>';
-	echo '<td><b>'.$blockUrl.'</b><span style="font-size: .8em;"> ('.$coin->algo.')</span></td>';
+        echo '<td><b>'.$blockUrl.'</b></td>';
 	echo '<td class="row right">'.$height.'</td>';
 	echo '<td align="right" style="font-size: .8em;"><b>'.$reward.'</b></td>';
+        echo '<td align="right" style="font-size: .8em; font-weight: bold; color: ' . getColorCode($coin->symbol_show) . ';">' . $coin->symbol_show . '</td>';
 	echo '<td align="right" style="font-size: .8em;">'.$percent.'%</td>';
-	echo '<td align="right" style="font-size: .8em;">'.$value.'</td>';
 	echo '<td align="right" style="font-size: .8em;">'.$d.'&nbsp;ago</td>';
 	echo '<td align="right" style="font-size: .8em;">';
 
