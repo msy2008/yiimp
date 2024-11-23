@@ -83,7 +83,7 @@ foreach($coins as $coin)
 	echo '<td data="'.$coin->created.'">'.$created.'</td>';
 
 //	echo "<td align=right>$difficulty</td>";
-	echo '<td align="center">'.$coin->block_height.'</td>';
+	echo '<td>'.$coin->block_height.'</td>';
 
 	echo "<td>$coin->errors</td>";
 	echo "<td>";
