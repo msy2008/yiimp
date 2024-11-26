@@ -182,7 +182,7 @@ foreach($list as $coin)
 
         if ($coin->symbol === 'IFC') {
             $blocksremaining = 11923200 - $height;
-            $totalDaysRemaining = $blocksremaining / 2550; 
+            $totalDaysRemaining = $blocksremaining / 2650; 
             $fullDaysRemaining = floor($totalDaysRemaining); 
             $hoursRemaining = ($totalDaysRemaining - $fullDaysRemaining) * 24; 
             $hoursRemaining = round($hoursRemaining); 
