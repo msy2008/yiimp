@@ -182,14 +182,14 @@ foreach($list as $coin)
 
         if ($coin->symbol === 'IFC') {
             $blocksremaining = 11923200 - $height;
-            $totalDaysRemaining = $blocksremaining / 2650; 
+            $totalDaysRemaining = $blocksremaining / 2880; 
             $fullDaysRemaining = floor($totalDaysRemaining); 
             $hoursRemaining = ($totalDaysRemaining - $fullDaysRemaining) * 24; 
             $hoursRemaining = round($hoursRemaining); 
             echo "<td align=right style='font-size: .8em;' title='IFC will be halving at block height 11923200'>{$fullDaysRemaining} days {$hoursRemaining} hours</td>";
         } elseif ($coin->symbol === 'DOGM') {
             $blocksremaining = 5622400 - $height;
-            $totalDaysRemaining = $blocksremaining / 1350; 
+            $totalDaysRemaining = $blocksremaining / 1440; 
             $fullDaysRemaining = floor($totalDaysRemaining); 
             $hoursRemaining = ($totalDaysRemaining - $fullDaysRemaining) * 24; 
             $hoursRemaining = round($hoursRemaining); 
