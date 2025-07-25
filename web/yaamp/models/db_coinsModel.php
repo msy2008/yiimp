@@ -51,7 +51,6 @@ class db_coins extends CActiveRecord
 			'hassubmitblock'=> 'Has submitblock',
 			'hasmasternodes'=> 'Masternodes',
 			'usesegwit'	=> 'Use segwit',
-			'usemweb'	=> 'Use MWEB',
 			'market'	=> 'Preferred market',
 			'rpcencoding'	=> 'RPC Type',
 			'specifications'=> 'Notes'
