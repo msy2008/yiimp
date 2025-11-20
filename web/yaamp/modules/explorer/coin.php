@@ -116,7 +116,7 @@ for($i = $start; $i > max(1, $start-21); $i--) {
 	echo '<td>'.$type.'</td>';
 	if ($multiAlgos) echo "<td>$algo</td>";
 	echo '<td>'.$tx.'</td>';
-	echo '<td>'.$size_kb.' kb</td>'; 
+	echo '<td>'.$size_kb.' kB</td>'; 
 	echo '<td>'.$value_out_formatted.'</td>'; 
 	echo '<td>'.$address.'</td>';  
 	echo '<td style="overflow-x: hidden; max-width:800px;"><span class="monospace">';
