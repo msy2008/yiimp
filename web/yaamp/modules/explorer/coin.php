@@ -6,7 +6,7 @@ JavascriptFile("/extensions/jqplot/jquery.jqplot.js");
 JavascriptFile("/extensions/jqplot/plugins/jqplot.dateAxisRenderer.js");
 JavascriptFile("/extensions/jqplot/plugins/jqplot.highlighter.js");
 
-$this->pageTitle = $coin->name." block explorer";
+$this->pageTitle = $coin->name.' block explorer';
 
 $start = (int) getiparam('start');
 
@@ -25,8 +25,6 @@ span.monospace { font-family: monospace; }
 </style>
 END;
 
-// version is used for multi algo coins
-// but each coin use different values...
 $multiAlgos = $coin->multialgos || versionToAlgo($coin, 0) !== false;
 
 echo '<br/>';
@@ -44,7 +42,8 @@ echo "<th>Difficulty</th>";
 echo "<th>Type</th>";
 if ($multiAlgos) echo "<th>Algo</th>";
 echo "<th>Tx</th>";
-echo "<th>Conf</th>";
+echo "<th>Value Out</th>";  
+echo "<th>Extracted by</th>"; 
 echo "<th>Blockhash</th>";
 echo "</tr>";
 echo "</thead>";
@@ -52,8 +51,7 @@ echo "</thead>";
 $remote = new WalletRPC($coin);
 if (!$start || $start > $coin->block_height)
 	$start = $coin->block_height;
-for($i = $start; $i > max(1, $start-21); $i--)
-{
+for($i = $start; $i > max(1, $start-21); $i--) {
 	$hash = $remote->getblockhash($i);
 	if(!$hash) continue;
 
@@ -70,25 +68,55 @@ for($i = $start; $i > max(1, $start-21); $i--)
 	else if (isset($block['auxpow'])) $type = 'Aux';
 	else if (isset($block['mint']) || strstr(arraySafeVal($block,'flags',''), 'proof-of-stake')) $type = 'PoS';
 
-	// nonce 256bits
 	if ($type == '' && $coin->symbol=='ZEC') $type = 'PoW';
 
-//	debuglog($block);
+	// Extract address logic
+	$address = 'Unknown';
+	foreach ($block['tx'] as $txid) {
+		$tx_data = $remote->getrawtransaction($txid, 1);
+		if (!$tx_data) continue;
+		
+		foreach ($tx_data['vout'] as $vout) {
+			if (isset($vout['scriptPubKey']['addresses']) && count($vout['scriptPubKey']['addresses']) > 0) {
+				$address = "<span class='monospace'>" . $vout['scriptPubKey']['addresses'][0] . "</span>";
+				break 2;
+			}
+		}
+	}
+
+	// Calculate total value out
+	$value_out = 0;
+	foreach ($block['tx'] as $txid) {
+		$tx_data = $remote->getrawtransaction($txid, 1);
+		if (!$tx_data) continue;
+		
+		foreach ($tx_data['vout'] as $vout) {
+			$value_out += $vout['value'];
+		}
+	}
+
+	// Format value out: show integer if no decimal, otherwise 8 decimal places
+	if ($value_out == floor($value_out)) {
+		$value_out_formatted = number_format($value_out, 0);
+	} else {
+		$value_out_formatted = number_format($value_out, 8);
+	}
+
+	// Format difficulty to show 3 decimal places
+	$diff_formatted = number_format($diff, 3);
+
 	echo '<tr class="ssrow">';
 	echo '<td>'.$d.'</td>';
-
 	echo '<td>'.$coin->createExplorerLink($i, array('height'=>$i)).'</td>';
-
-	echo '<td>'.$diff.'</td>';
+	echo '<td>'.$diff_formatted.'</td>';  // Formatted difficulty
 	echo '<td>'.$type.'</td>';
 	if ($multiAlgos) echo "<td>$algo</td>";
 	echo '<td>'.$tx.'</td>';
-	echo '<td>'.$confirms.'</td>';
-
+	echo '<td>'.$value_out_formatted.'</td>';  // Value Out after Tx
+	echo '<td>'.$address.'</td>';  // Extracted by after Value Out
 	echo '<td style="overflow-x: hidden; max-width:800px;"><span class="monospace">';
 	echo $coin->createExplorerLink($hash, array('hash'=>$hash));
 	echo '</span></td>';
-
 	echo "</tr>";
 }
 
@@ -104,7 +132,7 @@ if ($start > 20)
 
 $actionUrl = $coin->visible ? '/explorer/'.$coin->symbol : '/explorer/search?id='.$coin->id;
 
-echo <<<end
+echo <<<END
 <div id="pager" style="float: right; width: 200px; text-align: right; margin-right: 16px; margin-top: 8px;">$pager</div>
 <div id="form" style="width: 660px; height: 50px; overflow: hidden;">
 <form action="{$actionUrl}" method="POST" style="padding-top: 4px; width: 650px;">
@@ -113,12 +141,12 @@ echo <<<end
 <input type="submit" value="Search" class="main-submit-button" >
 </form>
 </div>
-end;
+END;
 
 if ($start != $coin->block_height)
 	return;
 
-echo <<<end
+echo <<<END
 <div id="diff_graph" style="margin-right: 8px; margin-top: -16px;">
 <br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 </div>
@@ -187,7 +215,7 @@ function diff_graph_data(data)
 			{
 				showLine: false,
 				markerOptions: { style: 'circle', size: 6, color: 'silver' },
-				animation: { show: true },
+				animation: { show: true },
 				highlighter: { yvalues: 3, formatString: '<font size="1">%s <span style="display:none;">%.1f</span>%g<br/>User block %u</font>' }
 			}
 		],
@@ -208,7 +236,7 @@ function diff_graph_data(data)
 	});
 }
 </script>
-end;
+END;
 
 app()->clientScript->registerScript('graph',"
 	graph_refresh();
