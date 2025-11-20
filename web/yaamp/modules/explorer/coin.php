@@ -42,6 +42,7 @@ echo "<th>Difficulty</th>";
 echo "<th>Type</th>";
 if ($multiAlgos) echo "<th>Algo</th>";
 echo "<th>Tx</th>";
+echo "<th>Size</th>";
 echo "<th>Value Out</th>";  
 echo "<th>Extracted by</th>"; 
 echo "<th>Blockhash</th>";
@@ -61,6 +62,7 @@ for($i = $start; $i > max(1, $start-21); $i--) {
 	$d = datetoa2($block['time']);
 	$confirms = isset($block['confirmations'])? $block['confirmations']: '';
 	$tx = count($block['tx']);
+	$block_size = isset($block['size']) ? $block['size'] : 0;
 	$diff = $block['difficulty'];
 	$algo = versionToAlgo($coin, $block['version']);
 	$type = '';
@@ -102,18 +104,21 @@ for($i = $start; $i > max(1, $start-21); $i--) {
 		$value_out_formatted = number_format($value_out, 8);
 	}
 
-	// Format difficulty to show 3 decimal places
-	$diff_formatted = number_format($diff, 3);
+	// Format difficulty to show 2 decimal places
+	$diff_formatted = number_format($diff, 2);
+    // Format size display (convert to KB and retain 2 decimal places)
+	$size_kb = number_format($block_size / 1024, 2);
 
 	echo '<tr class="ssrow">';
 	echo '<td>'.$d.'</td>';
 	echo '<td>'.$coin->createExplorerLink($i, array('height'=>$i)).'</td>';
-	echo '<td>'.$diff_formatted.'</td>';  // Formatted difficulty
+	echo '<td>'.$diff_formatted.'</td>';
 	echo '<td>'.$type.'</td>';
 	if ($multiAlgos) echo "<td>$algo</td>";
 	echo '<td>'.$tx.'</td>';
-	echo '<td>'.$value_out_formatted.'</td>';  // Value Out after Tx
-	echo '<td>'.$address.'</td>';  // Extracted by after Value Out
+	echo '<td>'.$size_kb.' kb</td>'; 
+	echo '<td>'.$value_out_formatted.'</td>'; 
+	echo '<td>'.$address.'</td>';  
 	echo '<td style="overflow-x: hidden; max-width:800px;"><span class="monospace">';
 	echo $coin->createExplorerLink($hash, array('hash'=>$hash));
 	echo '</span></td>';
