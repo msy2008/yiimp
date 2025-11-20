@@ -36,16 +36,15 @@ echo '<table class="dataGrid2">';
 
 echo "<thead>";
 echo "<tr>";
-echo "<th>Age</th>";
 echo "<th>Height</th>";
-echo "<th>Difficulty</th>";
+echo "<th>Age</th>";
 echo "<th>Type</th>";
 if ($multiAlgos) echo "<th>Algo</th>";
 echo "<th>Tx</th>";
 echo "<th>Size</th>";
-echo "<th>Value Out</th>";  
+echo "<th>Value Out</th>"; 
+echo "<th>Difficulty</th>";
 echo "<th>Extracted by</th>"; 
-echo "<th>Blockhash</th>";
 echo "</tr>";
 echo "</thead>";
 
@@ -110,17 +109,16 @@ for($i = $start; $i > max(1, $start-21); $i--) {
 	$size_kb = number_format($block_size / 1024, 2);
 
 	echo '<tr class="ssrow">';
-	echo '<td>'.$d.'</td>';
 	echo '<td>'.$coin->createExplorerLink($i, array('height'=>$i)).'</td>';
-	echo '<td>'.$diff_formatted.'</td>';
+	echo '<td>'.$d.'</td>';
 	echo '<td>'.$type.'</td>';
 	if ($multiAlgos) echo "<td>$algo</td>";
 	echo '<td>'.$tx.'</td>';
 	echo '<td>'.$size_kb.' kB</td>'; 
 	echo '<td>'.$value_out_formatted.'</td>'; 
+	echo '<td>'.$diff_formatted.'</td>';
 	echo '<td>'.$address.'</td>';  
 	echo '<td style="overflow-x: hidden; max-width:800px;"><span class="monospace">';
-	echo $coin->createExplorerLink($hash, array('hash'=>$hash));
 	echo '</span></td>';
 	echo "</tr>";
 }
