@@ -320,8 +320,9 @@ $actionUrl = $coin->visible ? '/explorer/'.$coin->symbol : '/explorer/search?id=
 
 echo <<<end
 <form action="{$actionUrl}" method="POST" style="padding: 8px; padding-left: 0px;">
-<input type="text" name="height" class="main-text-input" placeholder="block height" style="width: 80px;">
-<input type="text" name="txid" class="main-text-input" placeholder="tx hash" style="width: 450px; margin: 4px;">
+<input type="text" name="height" class="main-text-input" placeholder="Block Height" style="width: 80px;">
+<input type="text" name="txid" class="main-text-input" placeholder="Transaction Hash(txid)" style="width: 480px; margin: 4px;">
+<input type="text" name="hash" class="main-text-input" placeholder="Block Hash" style="width: 500px; margin: 4px;"
 <input type="submit" value="Search" class="main-submit-button">
 </form>
 end;
