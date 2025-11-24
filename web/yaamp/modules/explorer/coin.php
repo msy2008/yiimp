@@ -31,7 +31,7 @@ span.monospace { font-family: monospace; }
 /* Search container */
 #search-container {
     width: 100%;
-    max-width: 800px;
+    max-width: 1200px;
     margin: 16px 0;
 }
 
@@ -201,7 +201,8 @@ $actionUrl = $coin->visible ? '/explorer/' . $coin->symbol : '/explorer/search?i
 echo '<div id="search-container">';
 echo '<form id="search-form" action="' . $actionUrl . '" method="POST">';
 echo '<input type="text" name="height" class="main-text-input" placeholder="Block Height" style="width: 80px;">';
-echo '<input type="text" name="txid" class="main-text-input" placeholder="Transaction Hash" style="width: 400px;">';
+echo '<input type="text" name="txid" class="main-text-input" placeholder="Transaction Hash(txid)" style="width: 480px;">';
+echo '<input type="text" name="hash" class="main-text-input" placeholder="Block Hash" style="width: 500px;">';
 echo '<input type="submit" value="Search" class="main-submit-button" style="width: 100px;">';
 echo '</form></div>';
 
