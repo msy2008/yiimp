@@ -385,6 +385,7 @@ if ($coin->id) {
 	echo "server=1\n";
 	echo "daemon=1\n";
 	echo "listen=1\n";
+	echo "txindex=1\n";
 	echo "rpcuser={$coin->rpcuser}\n";
 	echo "rpcpassword={$coin->rpcpasswd}\n";
 	echo "rpcport={$coin->rpcport}\n";
