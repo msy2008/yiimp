@@ -26,7 +26,7 @@ showTableSorter('maintable', "{
 	tableClass: 'dataGrid2',
 	textExtraction: {
 		6: function(node, table, n) { return $(node).attr('data'); },
-		8: function(node, table, n) { return $(node).attr('data'); }
+		9: function(node, table, n) { return $(node).attr('data'); }
 	}
 }");
 
@@ -40,6 +40,7 @@ echo <<<end
 <th>Version</th>
 <th>Height</th>
 <th>Difficulty</th>
+<th>Outstanding</th>
 <th>Connections</th>
 <th>Network Hash</th>
 <th data-sorter=""></th>
@@ -71,8 +72,41 @@ foreach($list as $coin)
 		}
 	}
 
+	// Get Outstanding value (total coin supply)
+	$outstanding = 0;
+	$total_amount_key = "yiimp-outstanding-{$coin->symbol}";
+	$outstanding = controller()->memcache->get($total_amount_key);
+	if ($outstanding === false) {
+		$remote = new WalletRPC($coin);
+		if ($remote) {
+			try {
+				$txoutsetinfo = $remote->gettxoutsetinfo();
+				if (isset($txoutsetinfo['total_amount'])) {
+					$outstanding = $txoutsetinfo['total_amount'];
+					controller()->memcache->set($total_amount_key, $outstanding, 3600);
+				}
+			} catch (Exception $e) {
+				// If gettxoutsetinfo fails, try alternative methods
+				try {
+					$info = $remote->getinfo();
+					if (isset($info['moneysupply'])) {
+						$outstanding = $info['moneysupply'];
+						controller()->memcache->set($total_amount_key, $outstanding, 3600);
+					}
+				} catch (Exception $e2) {
+					// If still fails, set to 0 with shorter cache
+					$outstanding = 0;
+					controller()->memcache->set($total_amount_key, $outstanding, 300);
+				}
+			}
+		}
+	}
+
 	$difficulty = Itoa2($coin->difficulty, 3);
 	$nethash_sfx = $coin->network_hash? strtoupper(Itoa2($coin->network_hash)).'H/s': '';
+	
+	// Format Outstanding value
+	$outstanding_formatted = number_format($outstanding, 8, '.', '');
 
 	echo '<tr class="ssrow">';
 	echo '<td><img src="'.$coin->image.'" width="18"></td>';
@@ -87,6 +121,10 @@ foreach($list as $coin)
 	$diffnote = '';
 	if ($coin->algo == 'equihash' || $coin->algo == 'quark') $diffnote = '*';
 	echo '<td data="'.$coin->difficulty.'">'.$difficulty.$diffnote.'</td>';
+	
+	// Add Outstanding column
+	echo '<td>'.$outstanding_formatted.' '.$coin->symbol.'</td>';
+	
 	$cnx_class = (intval($coin->connections) > 3) ? '' : 'low';
 	$peers_link = CHtml::link($coin->connections, "javascript:wallet_peers({$coin->id});", array('class'=>$cnx_class));
 	echo '<td>'.$peers_link.'</td>';
@@ -109,6 +147,7 @@ echo <<<end
 </table>
 <p style="font-size: .8em;">
 	&nbsp;* Unified difficulty based on the hash target (might be different than wallet one)<br/>
+	&nbsp;+ Outstanding: total coin supply (from gettxoutsetinfo, cached for 1 hour)
 </p>
 </div></div>
 
