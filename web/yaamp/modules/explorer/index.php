@@ -106,7 +106,7 @@ foreach($list as $coin)
 	$nethash_sfx = $coin->network_hash? strtoupper(Itoa2($coin->network_hash)).'H/s': '';
 	
 	// Format Outstanding value without decimal places and without thousands separator
-	$outstanding_formatted = number_format($outstanding, 0, '.', '');
+	$outstanding_formatted = floor($outstanding);
 
 	echo '<tr class="ssrow">';
 	echo '<td><img src="'.$coin->image.'" width="18"></td>';
