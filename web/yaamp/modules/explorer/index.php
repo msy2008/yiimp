@@ -105,8 +105,8 @@ foreach($list as $coin)
 	$difficulty = Itoa2($coin->difficulty, 3);
 	$nethash_sfx = $coin->network_hash? strtoupper(Itoa2($coin->network_hash)).'H/s': '';
 	
-	// Format Outstanding value
-	$outstanding_formatted = number_format($outstanding, 8, '.', '');
+	// Format Outstanding value without decimal places and without thousands separator
+	$outstanding_formatted = number_format($outstanding, 0, '.', '');
 
 	echo '<tr class="ssrow">';
 	echo '<td><img src="'.$coin->image.'" width="18"></td>';
@@ -122,8 +122,8 @@ foreach($list as $coin)
 	if ($coin->algo == 'equihash' || $coin->algo == 'quark') $diffnote = '*';
 	echo '<td data="'.$coin->difficulty.'">'.$difficulty.$diffnote.'</td>';
 	
-	// Add Outstanding column
-	echo '<td>'.$outstanding_formatted.' '.$coin->symbol.'</td>';
+	// Add Outstanding column - only the formatted number without symbol
+	echo '<td>'.$outstanding_formatted.'</td>';
 	
 	$cnx_class = (intval($coin->connections) > 3) ? '' : 'low';
 	$peers_link = CHtml::link($coin->connections, "javascript:wallet_peers({$coin->id});", array('class'=>$cnx_class));
