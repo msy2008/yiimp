@@ -72,18 +72,22 @@ foreach($list as $coin)
 		}
 	}
 
-	// Get Outstanding value (total coin supply)
+	// Get Outstanding value (total coin supply) and height
 	$outstanding = 0;
+	$outstanding_height = 0;
 	$total_amount_key = "yiimp-outstanding-{$coin->symbol}";
-	$outstanding = controller()->memcache->get($total_amount_key);
-	if ($outstanding === false) {
+	$outstanding_data = controller()->memcache->get($total_amount_key);
+	
+	if ($outstanding_data === false) {
 		$remote = new WalletRPC($coin);
 		if ($remote) {
 			try {
 				$txoutsetinfo = $remote->gettxoutsetinfo();
-				if (isset($txoutsetinfo['total_amount'])) {
+				if (isset($txoutsetinfo['total_amount']) && isset($txoutsetinfo['height'])) {
 					$outstanding = $txoutsetinfo['total_amount'];
-					controller()->memcache->set($total_amount_key, $outstanding, 3600);
+					$outstanding_height = $txoutsetinfo['height'];
+					$outstanding_data = array('amount' => $outstanding, 'height' => $outstanding_height);
+					controller()->memcache->set($total_amount_key, $outstanding_data, 3600);
 				}
 			} catch (Exception $e) {
 				// If gettxoutsetinfo fails, try alternative methods
@@ -91,22 +95,31 @@ foreach($list as $coin)
 					$info = $remote->getinfo();
 					if (isset($info['moneysupply'])) {
 						$outstanding = $info['moneysupply'];
-						controller()->memcache->set($total_amount_key, $outstanding, 3600);
+						$outstanding_height = $coin->block_height;
+						$outstanding_data = array('amount' => $outstanding, 'height' => $outstanding_height);
+						controller()->memcache->set($total_amount_key, $outstanding_data, 3600);
 					}
 				} catch (Exception $e2) {
 					// If still fails, set to 0 with shorter cache
-					$outstanding = 0;
-					controller()->memcache->set($total_amount_key, $outstanding, 300);
+					$outstanding_data = array('amount' => 0, 'height' => 0);
+					controller()->memcache->set($total_amount_key, $outstanding_data, 300);
 				}
 			}
 		}
+	} else {
+		$outstanding = $outstanding_data['amount'];
+		$outstanding_height = $outstanding_data['height'];
 	}
 
 	$difficulty = Itoa2($coin->difficulty, 3);
 	$nethash_sfx = $coin->network_hash? strtoupper(Itoa2($coin->network_hash)).'H/s': '';
 	
-	// Format Outstanding value without decimal places and without thousands separator
+	// Format Outstanding value without decimal places, without thousands separator, and no rounding
 	$outstanding_formatted = floor($outstanding);
+	$outstanding_display = $outstanding_formatted;
+	if ($outstanding_height > 0) {
+		$outstanding_display = $outstanding_formatted . ' (height: ' . $outstanding_height . ')';
+	}
 
 	echo '<tr class="ssrow">';
 	echo '<td><img src="'.$coin->image.'" width="18"></td>';
@@ -123,7 +136,7 @@ foreach($list as $coin)
 	echo '<td data="'.$coin->difficulty.'">'.$difficulty.$diffnote.'</td>';
 	
 	// Add Outstanding column - only the formatted number without symbol
-	echo '<td>'.$outstanding_formatted.'</td>';
+	echo '<td>'.$outstanding_display.'</td>';
 	
 	$cnx_class = (intval($coin->connections) > 3) ? '' : 'low';
 	$peers_link = CHtml::link($coin->connections, "javascript:wallet_peers({$coin->id});", array('class'=>$cnx_class));
