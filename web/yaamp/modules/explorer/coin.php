@@ -68,6 +68,70 @@ span.monospace { font-family: monospace; }
     border-color: #5a5a5a;
     color: #ffffff;
 }
+
+/* Auto-refresh styling */
+.auto-refresh-settings {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(33, 37, 41, 0.7);
+    border-radius: 4px;
+    border: 1px solid #4a4a4a;
+}
+.auto-refresh-settings h3 {
+    margin-top: 0;
+    font-size: 1.1em;
+    color: #ffffff;
+}
+.refresh-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 5px;
+}
+.refresh-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.refresh-input-group label {
+    font-weight: 500;
+    color: #cccccc;
+}
+.refresh-input-group input {
+    width: 80px;
+    padding: 5px;
+    background: #2c2f33;
+    color: #ffffff;
+    border: 1px solid #4a4a4a;
+    border-radius: 3px;
+}
+.refresh-hint {
+    color: #aaaaaa;
+    font-size: 0.9em;
+}
+.apply-button {
+    padding: 6px 15px;
+    background: #2c2f33;
+    color: #ffffff;
+    border: 1px solid #4a4a4a;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.apply-button:hover {
+    background: #3d4147;
+    border-color: #5a5a5a;
+}
+.countdown-display {
+    color: #4caf50;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+.countdown-timer {
+    color: #ffffff;
+    font-weight: bold;
+}
 </style>
 END;
 
@@ -100,7 +164,16 @@ for($i = $coin->block_height; $i >= $endHeight; $i--) {
     $block = $remote->getblock($hash);
     if(!$block) continue;
 
-    $d = datetoa2($block['time']);
+    // Calculate age with simplified units
+    $age_display = 'unknown';
+    if (isset($block['time']) && $block['time'] > 0) {
+        $time_diff = time() - $block['time'];
+        if($time_diff < 60) $age_display = $time_diff . 's';
+        elseif($time_diff < 3600) $age_display = floor($time_diff / 60) . 'm';
+        elseif($time_diff < 86400) $age_display = floor($time_diff / 3600) . 'h';
+        else $age_display = floor($time_diff / 86400) . 'd';
+    }
+    
     $tx = count($block['tx']);
     $block_size = isset($block['size']) ? $block['size'] : 0;
     $diff = $block['difficulty'];
@@ -152,7 +225,7 @@ for($i = $coin->block_height; $i >= $endHeight; $i--) {
     // Output table row
     echo '<tr class="ssrow">';
     echo '<td>' . $coin->createExplorerLink($i, ['height'=>$i]) . '</td>';
-    echo '<td>' . $d . '</td>';
+    echo '<td>' . $age_display . '</td>';
     echo '<td>' . $type . '</td>';
     if ($multiAlgos) echo "<td>$algo</td>";
     echo '<td>' . $tx . '</td>';
@@ -211,25 +284,18 @@ $refreshKey = 'coin_explorer_refresh';
 $refreshInterval = isset($_COOKIE[$refreshKey]) ? (int)$_COOKIE[$refreshKey] : 60;
 ?>
 
-<div style="margin-top:20px;padding:15px;background:rgba(33, 37, 41, 0.7);border-radius:4px;border:1px solid #4a4a4a;">
-    <h3 style="margin-top:0;font-size:1.1em;color:#ffffff;">Auto Refresh Settings</h3>
-    <div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap;">
-        <div>
-            <label style="font-weight:500;color:#cccccc;">Refresh interval:</label>
-            <input type="number" id="refreshTime" min="0" value="<?=$refreshInterval?>" 
-                style="width:80px;padding:5px;background:#2c2f33;color:#ffffff;
-                border:1px solid #4a4a4a;border-radius:3px;">
-            <span style="color:#aaaaaa;font-size:0.9em;">seconds (0=disable)</span>
+<div class="auto-refresh-settings">
+    <h3>Auto Refresh Settings</h3>
+    <div class="refresh-controls">
+        <div class="refresh-input-group">
+            <label for="refreshTime">Refresh interval:</label>
+            <input type="number" id="refreshTime" min="0" max="3600" value="<?=$refreshInterval?>">
+            <span class="refresh-hint">seconds (0=disable)</span>
         </div>
-        <div>
-            <button id="applyRefresh" 
-                style="padding:6px 15px;background:#2c2f33;color:#ffffff;
-                border:1px solid #4a4a4a;border-radius:3px;cursor:pointer;">
-                Apply
-            </button>
-            <span id="refreshStatus" 
-                style="margin-left:15px;color:#888888;font-size:0.9em;"></span>
-        </div>
+        <button id="applyRefresh" class="apply-button">Apply</button>
+        <span id="countdownDisplay" class="countdown-display" style="display: <?= $refreshInterval > 0 ? 'inline' : 'none' ?>;">
+            Refreshing in <span id="countdownTimer" class="countdown-timer"><?= $refreshInterval ?></span> s...
+        </span>
     </div>
 </div>
 
@@ -238,68 +304,86 @@ $refreshInterval = isset($_COOKIE[$refreshKey]) ? (int)$_COOKIE[$refreshKey] : 6
 (function() {
     const STORAGE_KEY = "coin_explorer_refresh";
     let refreshInterval = <?=$refreshInterval?>;
-    
-    const refreshTimeInput = document.getElementById('refreshTime');
-    const applyButton = document.getElementById('applyRefresh');
-    const statusElement = document.getElementById('refreshStatus');
-    
-    refreshTimeInput.value = refreshInterval;
-    
     let countdownTimer = null;
     let countdownSeconds = refreshInterval;
     
-    const updateCountdown = () => {
-        statusElement.textContent = `Refreshing in ${countdownSeconds}s...`;
-    };
+    const refreshTimeInput = document.getElementById('refreshTime');
+    const applyButton = document.getElementById('applyRefresh');
+    const countdownDisplay = document.getElementById('countdownDisplay');
+    const countdownTimerElement = document.getElementById('countdownTimer');
     
-    const startCountdown = () => {
+    function startCountdown() {
         clearInterval(countdownTimer);
         countdownSeconds = refreshInterval;
-        updateCountdown();
         
-        countdownTimer = setInterval(() => {
-            countdownSeconds--;
-            updateCountdown();
+        if(refreshInterval > 0) {
+            countdownTimerElement.textContent = countdownSeconds;
+            countdownDisplay.style.display = 'inline';
             
-            if(countdownSeconds <= 0) {
-                clearInterval(countdownTimer);
-                statusElement.textContent = "Refreshing...";
-                setTimeout(() => {
-                    window.location.reload(true);
-                }, 500);
-            }
-        }, 1000);
-    };
+            countdownTimer = setInterval(() => {
+                countdownSeconds--;
+                countdownTimerElement.textContent = countdownSeconds;
+                
+                if(countdownSeconds <= 0) {
+                    clearInterval(countdownTimer);
+                    setTimeout(() => {
+                        window.location.reload(true);
+                    }, 1000);
+                }
+            }, 1000);
+        } else {
+            clearInterval(countdownTimer);
+            countdownDisplay.style.display = 'none';
+        }
+    }
     
-    const applyConfig = () => {
+    function loadSettings() {
+        const savedInterval = getCookie(STORAGE_KEY);
+        if(savedInterval !== null) {
+            const interval = parseInt(savedInterval);
+            if(!isNaN(interval) && interval >= 0) {
+                refreshInterval = interval;
+                refreshTimeInput.value = interval;
+            }
+        }
+        
+        startCountdown();
+    }
+    
+    function getCookie(name) {
+        const value = '; ' + document.cookie;
+        const parts = value.split('; ' + name + '=');
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+    
+    function setCookie(name, value, days = 365) {
+        const d = new Date();
+        d.setTime(d.getTime() + (days * 86400000));
+        document.cookie = name + "=" + value + ";expires=" + d.toUTCString() + ";path=/";
+    }
+    
+    function applyConfig() {
         const newInterval = parseInt(refreshTimeInput.value);
         
-        if(isNaN(newInterval) || newInterval < 0) {
-            statusElement.textContent = "Invalid interval";
+        if(isNaN(newInterval) || newInterval < 0 || newInterval > 3600) {
+            alert("Invalid interval (0-3600 seconds)");
             refreshTimeInput.focus();
             return;
         }
         
-        // Save to cookie
-        document.cookie = `${STORAGE_KEY}=${newInterval}; path=/`;
+        setCookie(STORAGE_KEY, newInterval);
         refreshInterval = newInterval;
         
-        if(refreshInterval > 0) {
-            startCountdown();
-        } else {
-            statusElement.textContent = "Auto refresh disabled";
-            clearInterval(countdownTimer);
-        }
-    };
+        startCountdown();
+    }
+    
+    loadSettings();
     
     applyButton.addEventListener('click', applyConfig);
     refreshTimeInput.addEventListener('keypress', e => {
         if(e.key === 'Enter') applyConfig();
     });
-    
-    if(refreshInterval > 0) {
-        startCountdown();
-    }
 })();
 </script>
 
